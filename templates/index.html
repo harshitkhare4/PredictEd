@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PredictEd - Student Performance Prediction</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" href="data:,">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" referrerpolicy="no-referrer" />
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="light-theme">
+    
+    <!-- Background Glow Nodes -->
+    <div class="glow-bg-top"></div>
+    <div class="glow-bg-bottom"></div>
+
+    <div class="app-container">
+        
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <i class="fa-solid fa-brain-circuit logo-icon"></i>
+                <div class="logo-text">
+                    <span class="logo-title">PredictEd</span>
+                    <span class="logo-subtitle">AI-based Academic Performance Analysis System</span>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#home" id="home" class="nav-item active" data-tab="home">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Home</span>
+                </a>
+                <a href="#predict" id="predict" class="nav-item" data-tab="predict">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Predict</span>
+                </a>
+                <a href="#about" id="about" class="nav-item" data-tab="about">
+                    <i class="fa-solid fa-circle-info"></i>
+                    <span>About / Features</span>
+                </a>
+                <a href="#contact" id="contact" class="nav-item" data-tab="contact">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span>Contact Us</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <span class="version">v1.2.0 • Stable</span>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            
+            <!-- 1️⃣ HOME PAGE -->
+            <section id="home-view" class="tab-view active">
+                <div class="home-hero">
+                    <div class="badge">🔥 Machine Learning Analytics</div>
+                    <h1 class="hero-title">Student Performance Prediction <br><span class="gradient-text">using Machine Learning</span></h1>
+                    <p class="hero-desc">
+                        A machine learning platform designed to predict student academic performance. Using a Random Forest model trained on various student factors, we estimate exam scores and help identify key areas for improvement.
+                    </p>
+                    <div class="hero-actions">
+                        <button class="btn btn-primary btn-large" onclick="switchTab('predict')">
+                            Get Started <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                        <button class="btn btn-secondary btn-large" onclick="switchTab('about')">
+                            Learn More
+                        </button>
+                    </div>
+                    
+                    <!-- Quick Stats Cards -->
+                    <div class="stats-row">
+                        <div class="stat-card glass-panel">
+                            <i class="fa-solid fa-chart-line stat-icon text-cyan"></i>
+                            <div class="stat-num">0.65</div>
+                            <div class="stat-label">R² Score (R-Squared)</div>
+                        </div>
+                        <div class="stat-card glass-panel">
+                            <i class="fa-solid fa-calculator stat-icon text-pink"></i>
+                            <div class="stat-num">1.19</div>
+                            <div class="stat-label">MAE (Mean Absolute Error)</div>
+                        </div>
+                        <div class="stat-card glass-panel">
+                            <i class="fa-solid fa-arrow-trend-down stat-icon text-purple"></i>
+                            <div class="stat-num">1.54</div>
+                            <div class="stat-label">RMSE (Root Mean Squared Error)</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2️⃣ PREDICTION PAGE -->
+            <section id="predict-view" class="tab-view">
+                <div class="section-header">
+                    <h2 class="section-title">AI Prediction Interface</h2>
+                    <p class="section-subtitle">Fill in the comprehensive profile parameters below to estimate academic performance.</p>
+                </div>
+                
+                <form id="prediction-form" onsubmit="submitPrediction(event)">
+                    <div class="form-grid">
+                        
+                        <!-- Group 1: Academic & Engagement Factors -->
+                        <div class="form-card glass-panel">
+                            <h3 class="group-title"><i class="fa-solid fa-graduation-cap group-icon"></i> Academic & Engagement</h3>
+                            
+                            <div class="input-group">
+                                <label for="Hours_Studied">Hours Studied (Weekly)</label>
+                                <div class="slider-container">
+                                    <input type="range" id="Hours_Studied" name="Hours_Studied" min="1" max="30" value="15" class="slider" oninput="updateSliderValue(this)">
+                                    <span class="slider-value" id="val-Hours_Studied">15 hrs</span>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="Attendance">Attendance Percentage (%)</label>
+                                <div class="slider-container">
+                                    <input type="range" id="Attendance" name="Attendance" min="60" max="100" value="85" class="slider" oninput="updateSliderValue(this, '%')">
+                                    <span class="slider-value" id="val-Attendance">85%</span>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="Previous_Scores">Previous Exam Score (out of 100)</label>
+                                <input type="number" id="Previous_Scores" name="Previous_Scores" min="50" max="100" value="75" required class="input-field">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="Tutoring_Sessions">Monthly Tutoring Sessions</label>
+                                <input type="number" id="Tutoring_Sessions" name="Tutoring_Sessions" min="0" max="8" value="2" required class="input-field">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="Motivation_Level">Motivation Level</label>
+                                <select id="Motivation_Level" name="Motivation_Level" class="select-field">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium" selected>Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="Teacher_Quality">Perceived Teacher Quality</label>
+                                <select id="Teacher_Quality" name="Teacher_Quality" class="select-field">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium" selected>Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Group 2: Personal & Environmental Factors -->
+                        <div class="form-card glass-panel">
+                            <h3 class="group-title"><i class="fa-solid fa-user group-icon"></i> Lifestyle & Environment</h3>
+                            
+                            <div class="input-group">
+                                <label for="Sleep_Hours">Average Daily Sleep (Hours)</label>
+                                <input type="number" id="Sleep_Hours" name="Sleep_Hours" min="4" max="10" value="7" required class="input-field">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="Physical_Activity">Weekly Physical Activity (Hours)</label>
+                                <input type="number" id="Physical_Activity" name="Physical_Activity" min="0" max="6" value="3" required class="input-field">
+                            </div>
+
+                            <div class="input-group">
+                                <label for="Distance_from_Home">Study Environment</label>
+                                <select id="Distance_from_Home" name="Distance_from_Home" class="select-field">
+                                    <option value="Quiet" selected>Quiet</option>
+                                    <option value="Average">Average</option>
+                                    <option value="Distracting">Distracting</option>
+                                </select>
+                            </div>
+
+                            <div class="input-row-binary">
+                                <div class="input-group-binary">
+                                    <label for="Extracurricular_Activities">Extracurricular Activities</label>
+                                    <select id="Extracurricular_Activities" name="Extracurricular_Activities" class="select-field select-binary">
+                                        <option value="No">No</option>
+                                        <option value="Yes" selected>Yes</option>
+                                    </select>
+                                </div>
+                                <div class="input-group-binary">
+                                    <label for="Access_to_Resources">Access to Resources</label>
+                                    <select id="Access_to_Resources" name="Access_to_Resources" class="select-field select-binary">
+                                        <option value="No">No</option>
+                                        <option value="Yes" selected>Yes</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="input-row-binary">
+                                <div class="input-group-binary">
+                                    <label for="Internet_Access">Internet Access</label>
+                                    <select id="Internet_Access" name="Internet_Access" class="select-field select-binary">
+                                        <option value="No">No</option>
+                                        <option value="Yes" selected>Yes</option>
+                                    </select>
+                                </div>
+                                <div class="input-group-binary">
+                                    <label for="Learning_Disabilities">Learning Disability</label>
+                                    <select id="Learning_Disabilities" name="Learning_Disabilities" class="select-field select-binary">
+                                        <option value="No" selected>No</option>
+                                        <option value="Yes">Yes</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Group 3: Socio-Demographic Factors -->
+                        <div class="form-card glass-panel">
+                            <h3 class="group-title"><i class="fa-solid fa-users group-icon"></i> Socio-Demographics</h3>
+                            
+                            <div class="input-group">
+                                <label for="Family_Income">Family Income Level</label>
+                                <select id="Family_Income" name="Family_Income" class="select-field">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium" selected>Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="Parental_Involvement">Parental Involvement</label>
+                                <select id="Parental_Involvement" name="Parental_Involvement" class="select-field">
+                                    <option value="Low">Low</option>
+                                    <option value="Medium" selected>Medium</option>
+                                    <option value="High">High</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="Parental_Education_Level">Parental Education Level</label>
+                                <select id="Parental_Education_Level" name="Parental_Education_Level" class="select-field">
+                                    <option value="High School">High School</option>
+                                    <option value="College" selected>College</option>
+                                    <option value="Postgraduate">Postgraduate</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="School_Type">Institution Type</label>
+                                <select id="School_Type" name="School_Type" class="select-field">
+                                    <option value="Public" selected>Public</option>
+                                    <option value="Private">Private</option>
+                                </select>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="Peer_Influence">Peer Influence</label>
+                                <select id="Peer_Influence" name="Peer_Influence" class="select-field">
+                                    <option value="Negative">Negative</option>
+                                    <option value="Neutral" selected>Neutral</option>
+                                    <option value="Positive">Positive</option>
+                                </select>
+                            </div>
+
+                            <div class="input-row-binary">
+                                <div class="input-group-binary full-width">
+                                    <label for="Gender">Gender</label>
+                                    <select id="Gender" name="Gender" class="select-field">
+                                        <option value="Female">Female</option>
+                                        <option value="Male" selected>Male</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Predict Button Centered -->
+                    <div class="form-submit-container">
+                        <button type="submit" class="btn btn-primary btn-large btn-submit" id="btn-predict">
+                            <span id="btn-text">Predict Student Performance</span>
+                            <span id="btn-spinner" class="spinner hidden"></span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- 🌟 HIGHLIGHTED RESULT CARD (MODAL / INLINE GLOW) -->
+                <div id="result-container" class="result-card hidden glass-panel glow-cyan">
+                    <div class="result-header">
+                        <h3 class="result-title"><i class="fa-solid fa-square-poll-vertical"></i> Prediction Output Analysis</h3>
+                        <button class="result-close" onclick="closeResult()">&times;</button>
+                    </div>
+                    <div class="result-body">
+                        <div class="result-main">
+                            <div class="result-score-circle">
+                                <span class="score-number" id="result-score">--</span>
+                                <span class="score-label">Exam Score</span>
+                            </div>
+                            <div class="result-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">Performance Level:</span>
+                                    <span class="detail-val badge-level" id="result-level">--</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Attendance Status:</span>
+                                    <span class="detail-val" id="result-attendance">--</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Engagement Level:</span>
+                                    <span class="detail-val" id="result-engagement">--</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="result-insights" id="result-insight-text">
+                            <!-- Populated by JS based on model result -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- 4️⃣ ABOUT / SERVICES PAGE -->
+            <section id="about-view" class="tab-view">
+                <div class="section-header">
+                    <h2 class="section-title">About the Intelligence Engine</h2>
+                    <p class="section-subtitle">Understanding the machine learning architecture and variable relationships.</p>
+                </div>
+                
+                <div class="about-grid">
+                    
+                    <!-- Core Features Column -->
+                    <div class="about-card glass-panel">
+                        <h3 class="about-card-title"><i class="fa-solid fa-star text-purple"></i> Project Explanation</h3>
+                        <p class="about-text">
+                            This project uses Machine Learning techniques to predict student academic performance based on factors such as study hours, attendance, motivation, and previous scores. The system is trained using a Random Forest Regression model and provides quick prediction results through an interactive interface.
+                        </p>
+                        
+                        <div class="feature-bullets">
+                            <div class="feature-item">
+                                <div class="feature-icon-wrapper bg-cyan"><i class="fa-solid fa-microchip"></i></div>
+                                <div class="feature-content">
+                                    <h4 class="feature-title">ML-Based Prediction</h4>
+                                    <p class="feature-desc">Utilizes a Random Forest Regression model trained on student data to provide accurate performance estimates.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="feature-item">
+                                <div class="feature-icon-wrapper bg-pink"><i class="fa-solid fa-hands-clapping"></i></div>
+                                <div class="feature-content">
+                                    <h4 class="feature-title">Easy to Use</h4>
+                                    <p class="feature-desc">Inputs are organized into three conversational groups with smooth sliders for easy evaluation.</p>
+                                </div>
+                            </div>
+
+                            <div class="feature-item">
+                                <div class="feature-icon-wrapper bg-purple"><i class="fa-solid fa-bolt"></i></div>
+                                <div class="feature-content">
+                                    <h4 class="feature-title">Fast Results</h4>
+                                    <p class="feature-desc">Quick inference time in the Flask backend with instant highlighting and dynamic feedback on the UI.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Feature Importance Bar Chart -->
+                    <div class="about-card glass-panel glow-purple">
+                        <h3 class="about-card-title"><i class="fa-solid fa-chart-simple text-cyan"></i> Feature Importance Analysis</h3>
+                        <p class="about-text">Generated from Random Forest feature importance values:</p>
+                        
+                        <div class="importance-chart" id="feature-importance-container">
+                            <div class="chart-loading">
+                                <span class="spinner"></span>
+                                <span>Querying model feature matrix...</span>
+                            </div>
+                            <!-- Dynamic elements populated via API -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5️⃣ CONTACT PAGE -->
+            <section id="contact-view" class="tab-view">
+                <div class="section-header">
+                    <h2 class="section-title">Get in Touch</h2>
+                    <p class="section-subtitle">Reach out to the developer for support or custom integrations.</p>
+                </div>
+                
+                <div class="contact-container">
+                    <!-- Contact Info Panel -->
+                    <div class="contact-info glass-panel">
+                        <h3 class="contact-card-title"><i class="fa-solid fa-user-tie text-pink"></i> About the Developer</h3>
+                        <div class="team-list">
+                            <div class="team-member">
+                                <div class="member-avatar"><i class="fa-solid fa-user-astronaut"></i></div>
+                                <div class="member-info">
+                                    <h4 class="member-name">Harshit Khare</h4>
+                                    <p class="member-role">Developer</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr class="separator">
+                        <div class="info-item">
+                            <i class="fa-solid fa-envelope info-icon text-pink"></i>
+                            <span>khareharshit862@gmail.com</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Script File -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
