@@ -15,6 +15,7 @@ MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
 # Global variables for model and feature importances
 model = None
 feature_importances = {}
+model_error = "Model not initialized"
 
 # Mappings for categorical/binary columns
 CATEGORICAL_MAPPINGS = {
@@ -44,7 +45,8 @@ FEATURE_COLUMNS = [
 ]
 
 def load_model():
-    global model, feature_importances
+    global model, feature_importances, model_error
+    model_error = None
     
     print("="*40)
     print("PREDICTED ML ENGINE STARTUP")
@@ -61,7 +63,8 @@ def load_model():
         print(f"⚠️ Failed to list directory contents: {list_err}")
     
     if not os.path.exists(MODEL_PATH):
-        print(f"ERROR: Model file NOT FOUND at: {MODEL_PATH}")
+        model_error = f"Model file NOT FOUND at: {MODEL_PATH}"
+        print(f"ERROR: {model_error}")
         return
     
     print(f"Loading ML model from {MODEL_PATH}...")
@@ -82,8 +85,9 @@ def load_model():
             
         print("Model loaded successfully and is ready for predictions!")
     except Exception as e:
+        model_error = str(e)
         print(f"CRITICAL ERROR: Failed to load model from {MODEL_PATH}")
-        print(f"Exception details: {str(e)}")
+        print(f"Exception details: {model_error}")
         import traceback
         traceback.print_exc()
         model = None
@@ -97,8 +101,9 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
+        print(f"--- MODEL LOADED STATUS: {'SUCCESS' if model is not None else 'FAILED'} ---")
         if model is None:
-            return jsonify({'success': False, 'error': 'Model failed to load'}), 500
+            return jsonify({'success': False, 'error': f"Model failed to load: {model_error}"}), 500
             
         data = request.json
         print("--- INCOMING PREDICTION REQUEST ---")
@@ -190,7 +195,7 @@ def get_feature_info():
     """
     try:
         if model is None or not feature_importances:
-            return jsonify({'success': False, 'error': 'Feature importance unavailable'})
+            return jsonify({'success': False, 'error': f'Feature importance unavailable: {model_error}'})
             
         importances_list = [{'feature': name.replace('_', ' '), 'importance': round(float(val) * 100, 2)} for name, val in feature_importances]
         return jsonify({
