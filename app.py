@@ -1,5 +1,7 @@
 import os
-import pickle
+import joblib
+import sys
+import sklearn
 import numpy as np
 import pandas as pd
 from flask import Flask, request, jsonify, render_template
@@ -43,20 +45,34 @@ FEATURE_COLUMNS = [
 
 def load_model():
     global model, feature_importances
+    
+    print("="*40)
+    print("🚀 PREDICTED ML ENGINE STARTUP")
+    print(f"🐍 Python version: {sys.version.split(' ')[0]}")
+    print(f"📦 Scikit-Learn version: {sklearn.__version__}")
+    print("="*40)
+    
     if not os.path.exists(MODEL_PATH):
-        raise FileNotFoundError(f"Model file not found at: {MODEL_PATH}")
+        print(f"❌ ERROR: Model file NOT FOUND at: {MODEL_PATH}")
+        return
     
-    print(f"Loading model from {MODEL_PATH}...")
-    with open(MODEL_PATH, 'rb') as f:
-        model = pickle.load(f)
-    
-    # Store feature importances for use in the About page API (safely without feature_names_in_)
-    if hasattr(model, 'feature_importances_'):
-        importances = dict(zip(FEATURE_COLUMNS, model.feature_importances_))
-        # Sort them descending
-        feature_importances = sorted(importances.items(), key=lambda x: x[1], reverse=True)
+    print(f"Loading ML model from {MODEL_PATH}...")
+    try:
+        model = joblib.load(MODEL_PATH)
         
-    print("Model loaded successfully!")
+        # Store feature importances for use in the About page API (safely without feature_names_in_)
+        if hasattr(model, 'feature_importances_'):
+            importances = dict(zip(FEATURE_COLUMNS, model.feature_importances_))
+            # Sort them descending
+            feature_importances = sorted(importances.items(), key=lambda x: x[1], reverse=True)
+            
+        print("✅ Model loaded successfully and is ready for predictions!")
+    except Exception as e:
+        print(f"❌ CRITICAL ERROR: Failed to load model from {MODEL_PATH}")
+        print(f"Exception details: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        model = None
 
 
 
