@@ -31,6 +31,16 @@ CATEGORICAL_MAPPINGS = {
     'Gender': {'Female': 0, 'Male': 1}
 }
 
+# Exact feature order required by the trained model (Fixes Render sklearn metadata deployment bug)
+FEATURE_COLUMNS = [
+    'Hours_Studied', 'Attendance', 'Parental_Involvement', 'Access_to_Resources',
+    'Extracurricular_Activities', 'Sleep_Hours', 'Previous_Scores', 'Motivation_Level',
+    'Internet_Access', 'Tutoring_Sessions', 'Family_Income', 'Teacher_Quality',
+    'School_Type', 'Peer_Influence', 'Physical_Activity', 'Learning_Disabilities',
+    'Parental_Education_Level', 'Distance_from_Home', 'Gender', 'Study_Efficiency',
+    'Engagement'
+]
+
 def load_model():
     global model, feature_importances
     if not os.path.exists(MODEL_PATH):
@@ -40,10 +50,12 @@ def load_model():
     with open(MODEL_PATH, 'rb') as f:
         model = pickle.load(f)
     
-    # Store feature importances for use in the About page API
-    importances = dict(zip(model.feature_names_in_, model.feature_importances_))
-    # Sort them descending
-    feature_importances = sorted(importances.items(), key=lambda x: x[1], reverse=True)
+    # Store feature importances for use in the About page API (safely without feature_names_in_)
+    if hasattr(model, 'feature_importances_'):
+        importances = dict(zip(FEATURE_COLUMNS, model.feature_importances_))
+        # Sort them descending
+        feature_importances = sorted(importances.items(), key=lambda x: x[1], reverse=True)
+        
     print("Model loaded successfully!")
 
 
@@ -55,6 +67,9 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
+        if model is None:
+            return jsonify({'error': 'Model failed to load'}), 500
+            
         data = request.json
         if not data:
             return jsonify({'error': 'No input data provided'}), 400
@@ -90,8 +105,8 @@ def predict():
         # Engagement = Attendance
         mapped_features['Engagement'] = mapped_features['Attendance']
         
-        # Create DataFrame in correct column order expected by model
-        df = pd.DataFrame([mapped_features])[model.feature_names_in_]
+        # Create DataFrame in correct column order expected by model using hardcoded array
+        df = pd.DataFrame([mapped_features], columns=FEATURE_COLUMNS)
         
         # Run prediction
         raw_score = model.predict(df)[0]
