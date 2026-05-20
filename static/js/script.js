@@ -290,8 +290,8 @@ async function loadFeatureImportances() {
 
     } catch (err) {
         container.innerHTML = `
-            <div style="color: var(--color-red); padding: 2rem 0; text-align: center;">
-                <i class="fa-solid fa-triangle-exclamation"></i> Error loading features: ${err.message}
+            <div style="color: var(--text-muted); padding: 2rem 0; text-align: center; font-size: 0.95rem;">
+                <i class="fa-solid fa-circle-info"></i> Feature importance unavailable
             </div>
         `;
     }

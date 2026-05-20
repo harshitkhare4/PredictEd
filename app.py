@@ -84,11 +84,14 @@ def home():
 def predict():
     try:
         if model is None:
-            return jsonify({'error': 'Model failed to load'}), 500
+            return jsonify({'success': False, 'error': 'Model failed to load'}), 500
             
         data = request.json
+        print("--- INCOMING PREDICTION REQUEST ---")
+        print(f"Received input: {data}")
+        
         if not data:
-            return jsonify({'error': 'No input data provided'}), 400
+            return jsonify({'success': False, 'error': 'No input data provided'}), 400
         
         # Prepare feature mapping dictionary
         mapped_features = {}
@@ -138,6 +141,8 @@ def predict():
         else:
             performance_level = "Poor"
             
+        print(f"Prediction generated: Score={exam_score}, Level={performance_level}")
+            
         return jsonify({
             'success': True,
             'exam_score': exam_score,
@@ -147,9 +152,10 @@ def predict():
         })
         
     except Exception as e:
+        print(f"❌ Prediction Error: {str(e)}")
         import traceback
         traceback.print_exc()
-        return jsonify({'error': f'Prediction failed: {str(e)}'}), 500
+        return jsonify({'success': False, 'error': f'Prediction failed: {str(e)}'}), 500
 
 @app.route('/about-features', methods=['GET'])
 def get_feature_info():
@@ -158,13 +164,17 @@ def get_feature_info():
     This creates an extremely smart 'About' or 'Features' page.
     """
     try:
+        if model is None or not feature_importances:
+            return jsonify({'success': False, 'error': 'Feature importance unavailable'})
+            
         importances_list = [{'feature': name.replace('_', ' '), 'importance': round(float(val) * 100, 2)} for name, val in feature_importances]
         return jsonify({
             'success': True,
             'importances': importances_list
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print(f"❌ Feature Importance Error: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
     # Initialize model before starting the server
