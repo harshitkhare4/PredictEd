@@ -47,13 +47,13 @@ def load_model():
     global model, feature_importances
     
     print("="*40)
-    print("🚀 PREDICTED ML ENGINE STARTUP")
-    print(f"🐍 Python version: {sys.version.split(' ')[0]}")
-    print(f"📦 Scikit-Learn version: {sklearn.__version__}")
+    print("PREDICTED ML ENGINE STARTUP")
+    print(f"Python version: {sys.version.split(' ')[0]}")
+    print(f"Scikit-Learn version: {sklearn.__version__}")
     print("="*40)
     
     if not os.path.exists(MODEL_PATH):
-        print(f"❌ ERROR: Model file NOT FOUND at: {MODEL_PATH}")
+        print(f"ERROR: Model file NOT FOUND at: {MODEL_PATH}")
         return
     
     print(f"Loading ML model from {MODEL_PATH}...")
@@ -72,9 +72,9 @@ def load_model():
             # Sort them descending
             feature_importances = sorted(importances.items(), key=lambda x: x[1], reverse=True)
             
-        print("✅ Model loaded successfully and is ready for predictions!")
+        print("Model loaded successfully and is ready for predictions!")
     except Exception as e:
-        print(f"❌ CRITICAL ERROR: Failed to load model from {MODEL_PATH}")
+        print(f"CRITICAL ERROR: Failed to load model from {MODEL_PATH}")
         print(f"Exception details: {str(e)}")
         import traceback
         traceback.print_exc()
@@ -143,7 +143,7 @@ def predict():
         try:
             raw_score = model.predict(df)[0]
         except Exception as pred_err:
-            print(f"❌ Core Prediction Engine Error: {str(pred_err)}")
+            print(f"Core Prediction Engine Error: {str(pred_err)}")
             return jsonify({'success': False, 'error': f"sklearn prediction failed: {str(pred_err)}"}), 500
             
         exam_score = round(float(raw_score), 2)
@@ -169,7 +169,7 @@ def predict():
         })
         
     except Exception as e:
-        print(f"❌ Prediction Error: {str(e)}")
+        print(f"Prediction Error: {str(e)}")
         import traceback
         traceback.print_exc()
         return jsonify({'success': False, 'error': f'Prediction failed: {str(e)}'}), 500
@@ -190,7 +190,7 @@ def get_feature_info():
             'importances': importances_list
         })
     except Exception as e:
-        print(f"❌ Feature Importance Error: {str(e)}")
+        print(f"Feature Importance Error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
 if __name__ == '__main__':
