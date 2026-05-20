@@ -1,60 +1,104 @@
-# PredictEd  
-### AI-based Academic Performance Analysis System
+# PredictEd – AI-Based Academic Performance Analysis System
 
-PredictEd is a Machine Learning-based web application developed to predict student academic performance using multiple academic and lifestyle parameters.  
-The project uses a Random Forest Regression model to estimate expected exam scores and provide performance analysis through an interactive web interface.
+PredictEd is a Machine Learning powered web application designed to predict student academic performance using behavioral and academic attributes.
+
+The system uses a Random Forest Regression model trained on student-related factors such as:
+- Study Hours
+- Attendance
+- Motivation Level
+- Previous Scores
+- Sleep Hours
+- Study Environment
+- Internet Access
+- Teacher Quality
+- Peer Influence
 
 ---
 
 ## Features
 
-- Student performance prediction using Machine Learning
-- Interactive and responsive light-themed UI
-- Real-time prediction analysis
-- Dynamic academic performance feedback
+- AI-based exam score prediction
+- Dynamic performance analysis
 - Feature importance visualization
-- Academic and lifestyle parameter analysis
-- Flask-based backend integration
+- PostgreSQL model storage support
+- Random Forest Regression
+- Interactive modern UI
+- Loading screen for Render cold starts
+- Production-ready Flask backend
 
 ---
 
-## Technologies Used
+## Tech Stack
 
 ### Frontend
-- HTML5
-- CSS3
+- HTML
+- CSS
 - JavaScript
 
 ### Backend
-- Python
 - Flask
+- Gunicorn
 
 ### Machine Learning
 - Scikit-learn
 - Random Forest Regression
-- Pandas
 - NumPy
+- Pandas
+- Joblib
+
+### Database
+- PostgreSQL
+- psycopg2
+
+### Deployment
+- Render
+- GitHub
 
 ---
 
-## Machine Learning Model
+## Machine Learning Workflow
 
-### Model Used
-- Random Forest Regressor
+1. User enters academic and behavioral data
+2. Frontend sends request to Flask API
+3. Backend preprocesses inputs
+4. Random Forest model predicts exam score
+5. Dynamic academic analysis is generated
+6. Feature importance data is visualized
 
-### Evaluation Metrics
-- MAE ≈ 1.19
-- R² Score ≈ 0.65
+---
 
-### Input Parameters
-The model analyzes parameters such as:
-- Study Hours
-- Attendance
-- Previous Exam Scores
-- Motivation Level
-- Sleep Duration
-- Physical Activity
-- Study Environment
-- Tutoring Sessions
-- Parental Involvement
-- Access to Resources
+## Prediction Categories
+
+### Performance Levels
+- Poor
+- Average
+- Good
+- Excellent
+
+### Dynamic Academic Analysis
+The application generates performance explanations dynamically based on predicted score ranges.
+
+---
+
+## Database Integration
+
+The trained ML model can be:
+- Loaded from PostgreSQL BYTEA storage
+- Loaded from local model.pkl fallback
+- Automatically verified during startup
+
+---
+
+## Deployment Notes
+
+Render free instances may take time during cold starts.  
+A professional loading screen is implemented to improve user experience during initialization.
+
+---
+
+Harshit Khare
+B.Tech CSE (AI & ML)
+
+Live Demo
+
+https://predicted-ai.onrender.com
