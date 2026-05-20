@@ -255,7 +255,7 @@ async function loadFeatureImportances() {
     if (!container) return;
 
     try {
-        const response = await fetch(`${API_BASE}/about-features`);
+        const response = await fetch(`${API_BASE}/feature-importance`);
         const data = await response.json();
 
         if (!response.ok || !data.success) {
@@ -263,22 +263,26 @@ async function loadFeatureImportances() {
         }
 
         let html = "";
-        data.importances.forEach((item, index) => {
-            // Keep it tidy by showing top 10 features, but can display more
-            if (index >= 10) return; 
+        if (data.features && data.importance) {
+            data.features.forEach((featureName, index) => {
+                // Keep it tidy by showing top 10 features, but can display more
+                if (index >= 10) return; 
+                
+                const importanceValue = data.importance[index];
 
-            html += `
-                <div class="importance-row">
-                    <div class="importance-info">
-                        <span class="importance-name">${item.feature}</span>
-                        <span class="importance-value">${item.importance.toFixed(1)}%</span>
+                html += `
+                    <div class="importance-row">
+                        <div class="importance-info">
+                            <span class="importance-name">${featureName}</span>
+                            <span class="importance-value">${importanceValue.toFixed(1)}%</span>
+                        </div>
+                        <div class="bar-track">
+                            <div class="bar-fill" data-width="${importanceValue}%"></div>
+                        </div>
                     </div>
-                    <div class="bar-track">
-                        <div class="bar-fill" data-width="${item.importance}%"></div>
-                    </div>
-                </div>
-            `;
-        });
+                `;
+            });
+        }
 
         container.innerHTML = html;
         importancesLoaded = true;

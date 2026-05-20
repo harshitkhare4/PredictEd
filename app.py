@@ -5,8 +5,20 @@ import sklearn
 import numpy as np
 import pandas as pd
 from flask import Flask, request, jsonify, render_template
+from db import init_connection_pool
+from model_utils import init_db, save_model_to_db, load_model_from_db
+
+import site
 
 app = Flask(__name__)
+
+print("="*40)
+print("PREDICTED ML ENGINE ENVIRONMENT CHECK")
+print(f"Active Python Interpreter: {sys.executable}")
+print(f"Python Version: {sys.version.split(' ')[0]}")
+if hasattr(site, 'getsitepackages'):
+    print(f"Site Packages path: {site.getsitepackages()}")
+print("="*40)
 
 # Constants
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -16,6 +28,7 @@ MODEL_PATH = os.path.join(BASE_DIR, "model.pkl")
 model = None
 feature_importances = {}
 model_error = "Model not initialized"
+MODEL_SOURCE = "unknown"
 
 # Mappings for categorical/binary columns
 CATEGORICAL_MAPPINGS = {
@@ -44,53 +57,69 @@ FEATURE_COLUMNS = [
     'Engagement'
 ]
 
-def load_model():
-    global model, feature_importances, model_error
+# Initialize DB on startup (safely attempts, ignores if no DATABASE_URL)
+try:
+    init_db()
+except Exception as e:
+    print(f"PostgreSQL not initialized: {e}")
+
+def get_model():
+    global model, feature_importances, model_error, MODEL_SOURCE
+    
+    # Return from cache if already loaded
+    if model is not None:
+        return model
+        
     model_error = None
     
     print("="*40)
-    print("PREDICTED ML ENGINE STARTUP")
+    print("PREDICTED ML ENGINE LAZY STARTUP")
     print(f"Python version: {sys.version.split(' ')[0]}")
     print(f"Scikit-Learn version: {sklearn.__version__}")
     print("="*40)
     
-    print(f"🔍 BASE_DIR Detected: {BASE_DIR}")
-    print(f"🔍 Expected MODEL_PATH: {MODEL_PATH}")
-    
-    try:
-        print(f"📂 Directory contents of BASE_DIR: {os.listdir(BASE_DIR)}")
-    except Exception as list_err:
-        print(f"⚠️ Failed to list directory contents: {list_err}")
-    
-    if not os.path.exists(MODEL_PATH):
-        model_error = f"Model file NOT FOUND at: {MODEL_PATH}"
-        print(f"ERROR: {model_error}")
-        return
-    
-    print(f"Loading ML model from {MODEL_PATH}...")
-    try:
-        model = joblib.load(MODEL_PATH)
-        
-        if hasattr(model, 'feature_names_in_'):
-            print("Model Expected Features:")
-            print(list(model.feature_names_in_))
-        else:
-            print("WARNING: model.feature_names_in_ is NOT available on this model.")
-        
-        # Store feature importances for use in the About page API (safely without feature_names_in_)
-        if hasattr(model, 'feature_importances_'):
-            importances = dict(zip(FEATURE_COLUMNS, model.feature_importances_))
-            # Sort them descending
-            feature_importances = sorted(importances.items(), key=lambda x: x[1], reverse=True)
+    # Strategy 1: Attempt to load from local filesystem (Fastest for local dev)
+    print(f"[Hybrid Load] Attempting local filesystem load from {MODEL_PATH}...")
+    if os.path.exists(MODEL_PATH):
+        try:
+            model = joblib.load(MODEL_PATH)
+            MODEL_SOURCE = "local_file"
+            print("[Hybrid Load] SUCCESS: Model loaded from local filesystem.")
+        except Exception as e:
+            print(f"[Hybrid Load] Failed to load local model: {e}")
+            model = None
+    else:
+        print(f"[Hybrid Load] Local model file not found at {MODEL_PATH}")
+
+    # Strategy 2: Fallback to PostgreSQL (Deployment safe)
+    if model is None:
+        print("[Hybrid Load] Attempting PostgreSQL fallback load...")
+        try:
+            model = load_model_from_db()
+            if model:
+                MODEL_SOURCE = "postgresql"
+                print("[Hybrid Load] SUCCESS: Model loaded from PostgreSQL.")
+            else:
+                model_error = "Model not found in PostgreSQL and local file missing."
+                print(f"ERROR: {model_error}")
+        except Exception as db_err:
+            print(f"[Hybrid Load] Failed to load from PostgreSQL: {db_err}")
+            model_error = str(db_err)
+
+    # Strategy 3: Setup globals if load was successful
+    if model is not None:
+        try:
+            if hasattr(model, 'feature_importances_'):
+                importances = dict(zip(FEATURE_COLUMNS, model.feature_importances_))
+                feature_importances = sorted(importances.items(), key=lambda x: x[1], reverse=True)
+        except Exception as feat_err:
+            print(f"Failed to parse feature importances: {feat_err}")
             
-        print("Model loaded successfully and is ready for predictions!")
-    except Exception as e:
-        model_error = str(e)
-        print(f"CRITICAL ERROR: Failed to load model from {MODEL_PATH}")
-        print(f"Exception details: {model_error}")
-        import traceback
-        traceback.print_exc()
-        model = None
+        print("Hybrid Model Loading Complete. Engine ready for predictions!")
+        return model
+        
+    print("CRITICAL ERROR: Hybrid model loading failed completely.")
+    return None
 
 
 
@@ -101,8 +130,9 @@ def home():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        print(f"--- MODEL LOADED STATUS: {'SUCCESS' if model is not None else 'FAILED'} ---")
-        if model is None:
+        current_model = get_model()
+        print(f"--- MODEL LOADED STATUS: {'SUCCESS' if current_model is not None else 'FAILED'} ---")
+        if current_model is None:
             return jsonify({'success': False, 'error': f"Model failed to load: {model_error}"}), 500
             
         data = request.json
@@ -154,7 +184,7 @@ def predict():
         
         # Run prediction safely
         try:
-            raw_score = model.predict(df)[0]
+            raw_score = current_model.predict(df)[0]
         except Exception as pred_err:
             print(f"Core Prediction Engine Error: {str(pred_err)}")
             return jsonify({'success': False, 'error': f"sklearn prediction failed: {str(pred_err)}"}), 500
@@ -187,28 +217,68 @@ def predict():
         traceback.print_exc()
         return jsonify({'success': False, 'error': f'Prediction failed: {str(e)}'}), 500
 
-@app.route('/about-features', methods=['GET'])
+@app.route('/feature-importance', methods=['GET'])
 def get_feature_info():
     """
-    Returns feature importances extracted directly from the RandomForestRegressor.
-    This creates an extremely smart 'About' or 'Features' page.
+    API endpoint that safely extracts Random Forest feature importances 
+    without crashing if metadata is stripped in production.
     """
     try:
-        if model is None or not feature_importances:
+        print(f"--- ROUTE HIT: /feature-importance ---")
+        current_model = get_model()
+        print(f"Model Source: {MODEL_SOURCE}")
+        
+        if current_model is None or not feature_importances:
+            print("Feature importance extraction failed or model unavailable.")
             return jsonify({'success': False, 'error': f'Feature importance unavailable: {model_error}'})
             
-        importances_list = [{'feature': name.replace('_', ' '), 'importance': round(float(val) * 100, 2)} for name, val in feature_importances]
+        # Validate safety check requested by user
+        if not hasattr(current_model, "feature_importances_"):
+            print("Model lacks feature_importances_ attribute.")
+            return jsonify({'success': False, 'error': 'Model metadata stripped.'})
+            
+        print("Feature importance extracted successfully.")
+        
+        features = [name.replace('_', ' ') for name, val in feature_importances]
+        importance_vals = [round(float(val) * 100, 2) for name, val in feature_importances]
+        
         return jsonify({
             'success': True,
-            'importances': importances_list
+            'features': features,
+            'importance': importance_vals
         })
     except Exception as e:
         print(f"Feature Importance Error: {str(e)}")
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/save-model', methods=['POST'])
+def save_model_api():
+    try:
+        if not os.path.exists(MODEL_PATH):
+            return jsonify({'success': False, 'error': 'Local model.pkl not found to save.'}), 404
+            
+        success = save_model_to_db(MODEL_PATH)
+        if success:
+            return jsonify({'success': True, 'message': 'Model successfully uploaded to PostgreSQL.'})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to save model to PostgreSQL. Check server logs.'}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/model-source', methods=['GET'])
+def get_model_source():
+    try:
+        # Force a lazy load if it hasn't happened yet
+        get_model()
+        return jsonify({
+            "success": True,
+            "model_source": MODEL_SOURCE,
+            "model_loaded": model is not None,
+            "error": model_error if model is None else None
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
 if __name__ == '__main__':
-    # Initialize model before starting the server
-    load_model()
-    
-    # Start Flask Server
+    # Do not call load_model() here anymore. It will lazy-load on the first request!
     app.run(host='0.0.0.0', port=5000, debug=True)
