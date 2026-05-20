@@ -52,6 +52,14 @@ def load_model():
     print(f"Scikit-Learn version: {sklearn.__version__}")
     print("="*40)
     
+    print(f"🔍 BASE_DIR Detected: {BASE_DIR}")
+    print(f"🔍 Expected MODEL_PATH: {MODEL_PATH}")
+    
+    try:
+        print(f"📂 Directory contents of BASE_DIR: {os.listdir(BASE_DIR)}")
+    except Exception as list_err:
+        print(f"⚠️ Failed to list directory contents: {list_err}")
+    
     if not os.path.exists(MODEL_PATH):
         print(f"ERROR: Model file NOT FOUND at: {MODEL_PATH}")
         return
