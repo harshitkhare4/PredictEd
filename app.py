@@ -60,6 +60,12 @@ def load_model():
     try:
         model = joblib.load(MODEL_PATH)
         
+        if hasattr(model, 'feature_names_in_'):
+            print("Model Expected Features:")
+            print(list(model.feature_names_in_))
+        else:
+            print("WARNING: model.feature_names_in_ is NOT available on this model.")
+        
         # Store feature importances for use in the About page API (safely without feature_names_in_)
         if hasattr(model, 'feature_importances_'):
             importances = dict(zip(FEATURE_COLUMNS, model.feature_importances_))
@@ -127,8 +133,19 @@ def predict():
         # Create DataFrame in correct column order expected by model using hardcoded array
         df = pd.DataFrame([mapped_features], columns=FEATURE_COLUMNS)
         
-        # Run prediction
-        raw_score = model.predict(df)[0]
+        print("--- DATAFRAME GENERATED ---")
+        print(f"Columns: {list(df.columns)}")
+        print(f"Shape: {df.shape}")
+        if hasattr(model, 'feature_names_in_'):
+            print(f"Model Expected: {list(model.feature_names_in_)}")
+        
+        # Run prediction safely
+        try:
+            raw_score = model.predict(df)[0]
+        except Exception as pred_err:
+            print(f"❌ Core Prediction Engine Error: {str(pred_err)}")
+            return jsonify({'success': False, 'error': f"sklearn prediction failed: {str(pred_err)}"}), 500
+            
         exam_score = round(float(raw_score), 2)
         
         # Determine Performance Level
