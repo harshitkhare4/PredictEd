@@ -18,6 +18,24 @@ document.addEventListener('DOMContentLoaded', () => {
     loadFeatureImportances();
 });
 
+// Hide loader when page is fully loaded
+window.addEventListener('load', () => {
+    setTimeout(hideLoader, 300); // slight delay for smooth transition
+});
+
+/**
+ * 🔄 Full Screen Loading Overlay Management
+ */
+function showLoader() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.classList.remove('hidden');
+}
+
+function hideLoader() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) overlay.classList.add('hidden');
+}
+
 /**
  * 🗺️ Dynamic Tab / SPA Page Navigation
  */
@@ -119,6 +137,7 @@ async function submitPrediction(e) {
     btnText.textContent = "AI Analysis In Progress...";
     btnSpinner.classList.remove('hidden');
     resultContainer.classList.add('hidden');
+    showLoader();
 
     try {
         // 3. Make Flask API Call
@@ -147,6 +166,7 @@ async function submitPrediction(e) {
         btnPredict.disabled = false;
         btnText.textContent = "Predict Student Performance";
         btnSpinner.classList.add('hidden');
+        hideLoader();
     }
 }
 
