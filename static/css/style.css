@@ -1086,3 +1086,19 @@ body {
         align-self: flex-end;
     }
 }
+
+/* ℹ️ Premium Tooltip Custom Icon Styling */
+.tooltip-icon {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-left: 0.35rem;
+    cursor: help;
+    transition: var(--transition);
+    vertical-align: middle;
+}
+
+.tooltip-icon:hover {
+    color: var(--color-cyan);
+    transform: scale(1.15);
+}
+

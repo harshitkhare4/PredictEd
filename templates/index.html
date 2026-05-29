@@ -132,8 +132,8 @@
                             <div class="input-group">
                                 <label for="Attendance">Attendance Percentage (%)</label>
                                 <div class="slider-container">
-                                    <input type="range" id="Attendance" name="Attendance" min="60" max="100" value="85" class="slider" oninput="updateSliderValue(this, '%')">
-                                    <span class="slider-value" id="val-Attendance">85%</span>
+                                    <input type="range" id="Attendance" name="Attendance" min="0" max="100" value="75" class="slider" oninput="updateSliderValue(this, '%')">
+                                    <span class="slider-value" id="val-Attendance">75%</span>
                                 </div>
                             </div>
 
@@ -256,15 +256,21 @@
                             </div>
 
                             <div class="input-group">
-                                <label for="School_Type">Institution Type</label>
-                                <select id="School_Type" name="School_Type" class="select-field">
-                                    <option value="Public" selected>Public</option>
+                                <label for="Institution_Type">
+                                    Institution Type
+                                    <i class="fa-solid fa-circle-info tooltip-icon" title="Type of educational institution attended by the student."></i>
+                                </label>
+                                <select id="Institution_Type" name="Institution_Type" class="select-field">
+                                    <option value="Government" selected>Government</option>
                                     <option value="Private">Private</option>
                                 </select>
                             </div>
 
                             <div class="input-group">
-                                <label for="Peer_Influence">Peer Influence</label>
+                                <label for="Peer_Influence">
+                                    Peer Influence (Friends' Impact on Studies)
+                                    <i class="fa-solid fa-circle-info tooltip-icon" title="Measures whether friends positively, negatively, or neutrally affect academic performance."></i>
+                                </label>
                                 <select id="Peer_Influence" name="Peer_Influence" class="select-field">
                                     <option value="Negative">Negative</option>
                                     <option value="Neutral" selected>Neutral</option>

@@ -127,6 +127,10 @@ def get_model():
 def home():
     return render_template('index.html')
 
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "healthy"})
+
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
@@ -141,24 +145,35 @@ def predict():
         
         if not data:
             return jsonify({'success': False, 'error': 'No input data provided'}), 400
+            
+        # Copy input data so we don't modify request JSON in-place
+        processed_data = data.copy()
+        
+        # Map Institution_Type -> School_Type (Government -> Public, Private -> Private)
+        if 'Institution_Type' in processed_data:
+            inst_val = processed_data['Institution_Type']
+            if inst_val == 'Government':
+                processed_data['School_Type'] = 'Public'
+            elif inst_val == 'Private':
+                processed_data['School_Type'] = 'Private'
         
         # Prepare feature mapping dictionary
         mapped_features = {}
         
         # 1. Map all continuous numerical inputs directly
         try:
-            mapped_features['Hours_Studied'] = float(data.get('Hours_Studied', 15.0))
-            mapped_features['Attendance'] = float(data.get('Attendance', 85.0))
-            mapped_features['Sleep_Hours'] = float(data.get('Sleep_Hours', 7.0))
-            mapped_features['Previous_Scores'] = float(data.get('Previous_Scores', 75.0))
-            mapped_features['Tutoring_Sessions'] = float(data.get('Tutoring_Sessions', 2.0))
-            mapped_features['Physical_Activity'] = float(data.get('Physical_Activity', 3.0))
+            mapped_features['Hours_Studied'] = float(processed_data.get('Hours_Studied', 15.0))
+            mapped_features['Attendance'] = float(processed_data.get('Attendance', 75.0))
+            mapped_features['Sleep_Hours'] = float(processed_data.get('Sleep_Hours', 7.0))
+            mapped_features['Previous_Scores'] = float(processed_data.get('Previous_Scores', 75.0))
+            mapped_features['Tutoring_Sessions'] = float(processed_data.get('Tutoring_Sessions', 2.0))
+            mapped_features['Physical_Activity'] = float(processed_data.get('Physical_Activity', 3.0))
         except ValueError as val_err:
             return jsonify({'error': f'Invalid numerical input: {str(val_err)}'}), 400
             
         # 2. Map categorical fields using our reverse-engineered mappings
         for field, mapping in CATEGORICAL_MAPPINGS.items():
-            user_val = data.get(field)
+            user_val = processed_data.get(field)
             if user_val not in mapping:
                 return jsonify({'error': f"Invalid or missing value for field '{field}': '{user_val}'. Valid values: {list(mapping.keys())}"}), 400
             mapped_features[field] = float(mapping[user_val])
