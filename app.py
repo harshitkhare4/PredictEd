@@ -165,7 +165,12 @@ def predict():
             mapped_features['Hours_Studied'] = float(processed_data.get('Hours_Studied', 15.0))
             mapped_features['Attendance'] = float(processed_data.get('Attendance', 75.0))
             mapped_features['Sleep_Hours'] = float(processed_data.get('Sleep_Hours', 7.0))
-            mapped_features['Previous_Scores'] = float(processed_data.get('Previous_Scores', 75.0))
+            
+            prev_scores = float(processed_data.get('Previous_Scores', 75.0))
+            if prev_scores < 0 or prev_scores > 100:
+                return jsonify({'error': 'Previous Exam Score must be between 0 and 100 inclusive.'}), 400
+            mapped_features['Previous_Scores'] = prev_scores
+            
             mapped_features['Tutoring_Sessions'] = float(processed_data.get('Tutoring_Sessions', 2.0))
             mapped_features['Physical_Activity'] = float(processed_data.get('Physical_Activity', 3.0))
         except ValueError as val_err:
